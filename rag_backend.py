@@ -158,7 +158,7 @@ def embed_query(query: str) -> List[float]:
     
     return resp.data[0].embedding
 
-def search_similar_chunks(query: str, k: int = 3):
+def search_similar_chunks(query: str, k: int = 10):
     """
     Sucht die k ähnlichsten Chunks in der Collection für eine
     gegebene Nutzerfrage (query).
@@ -217,7 +217,7 @@ def build_rag_prompt(question: str, results: List[tuple]) -> str:
     
     return prompt
 
-def answer_question_with_rag(question: str, k: int = 3) -> str:
+def answer_question_with_rag(question: str, k: int = 10) -> str:
     """
     Führt einen kompletten RAG-Druchlauf durch:
     - Ähnliche Chunks suchen
