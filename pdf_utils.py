@@ -42,17 +42,26 @@ def extract_text_with_ocr(pdf_bytes: bytes, lang="de"):
     und per Paddle OCR ausgelesen.
     """
 
-    ocr = PaddleOCR(lang=lang)
-
+    # 1. Versuch mit PyPDF2
+    pages_text = extract_text_with_pypdf2(pdf_file=io.BytesIO(pdf_bytes))
+    ocr = None
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
 
     structured_pages = []
+    for page_number, page_text in enumerate(pages_text):
+        page_text = page_text.strip()
+        if page_text:
+            structured = structure_document(page_text)
+            structured["page_number"] = page_number + 1
+            structured_pages.append(structured)
+            continue
 
-    for page_number in range(len(doc)):
-        page = doc[page_number]
+        if ocr is None:
+            ocr = PaddleOCR(lang=lang)
 
+        # 2. Fallback mit OCR:
         # Seite rendern (Pixel-Matrix):
-        pix = page.get_pixmap(dpi=300)
+        pix = doc[page_number].get_pixmap(dpi=300)
 
         # Pixel-Matrix in PNG-Bystes:
         img_bytes = pix.tobytes("png")
@@ -62,14 +71,14 @@ def extract_text_with_ocr(pdf_bytes: bytes, lang="de"):
 
         # OCR durchführen:
         result = ocr.predict(np.array(img))
-        page_text_lines = []
+        ocr_lines = []
         for res in result:
             if "rec_texts" in res:
-                page_text_lines.extend(res["rec_texts"])
-        page_text = "\n".join(page_text_lines)
+                ocr_lines.extend(res["rec_texts"])
+        ocr_text = "\n".join(ocr_lines)
 
         # Strukturierung der OCR-Ausgabe:
-        structured = structure_document(text=page_text)
+        structured = structure_document(ocr_text)
         structured["page_number"] = page_number + 1
         structured_pages.append(structured)
 

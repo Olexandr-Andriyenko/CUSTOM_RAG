@@ -5,5 +5,6 @@
     },
     "black-formatter.args": [
         "--line-length", "90",
-    ]
+    ],
+    "python-envs.pythonProjects": []
 }
